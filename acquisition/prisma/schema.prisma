@@ -25,7 +25,7 @@ model Session{
 model Measure{
   id        Int         @id @default(autoincrement())
   time      DateTime    @default(now())
-  value     Float       
+  value     String       
   idSession Int
   session   Session     @relation(fields: [idSession], references: [id])
 }

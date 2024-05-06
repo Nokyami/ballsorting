@@ -28,7 +28,7 @@ const parser = arduino.pipe(new ReadlineParser({ delimiter: '\r\n' }))
 
 parser.on('data', (data)=>{
   etat.lastTimestamp = new Date()
-  etat.lastAcquisition = Number(data.toString())
+  etat.lastAcquisition = String(data)
   if(etat.idle === false && currentSession){
     prisma.measure.create({ data: {
       time: etat.lastTimestamp,
