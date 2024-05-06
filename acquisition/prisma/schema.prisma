@@ -19,12 +19,21 @@ model Session{
   start     DateTime    @default(now())
   stop      DateTime?
   mesures   Measure[]
+  container Container[]
 }
 
 model Measure{
   id        Int         @id @default(autoincrement())
   time      DateTime    @default(now())
   value     Float       
+  idSession Int
+  session   Session     @relation(fields: [idSession], references: [id])
+}
+
+model Container{
+  id        Int         @id @default(autoincrement())
+  type      String
+  numBalls  Int 
   idSession Int
   session   Session     @relation(fields: [idSession], references: [id])
 }
