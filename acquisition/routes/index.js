@@ -19,7 +19,10 @@ arduino.on('error', (err)=>{
 const etat = {
   lastTimestamp: 0,
   lastAcquisition: NaN,
-  idle: true
+  idle: true,
+  cptY: 0,
+  cptP: 0,
+  cptO: 0,
 }
 
 let currentSession = null
@@ -29,10 +32,22 @@ const parser = arduino.pipe(new ReadlineParser({ delimiter: '\r\n' }))
 parser.on('data', (data)=>{
   etat.lastTimestamp = new Date()
   etat.lastAcquisition = String(data)
+  etat.cptY = Number(etat.lastAcquisition === "Yellow" ? etat.cptY+1 : etat.cptY)
+  etat.cptP = Number(etat.lastAcquisition === "Pink" ? etat.cptP+1 : etat.cptP)
+  etat.cptO = Number(etat.lastAcquisition === "Other" ? etat.cptO+1 : etat.cptO)
+  console.log(etat.cptY)
+  console.log(etat.cptP)
+  console.log(etat.cptO)
+  //etat.compteur = etat.compteur+1
   if(etat.idle === false && currentSession){
     prisma.measure.create({ data: {
       time: etat.lastTimestamp,
       value: etat.lastAcquisition,
+      idSession: currentSession.id
+    }}).then()
+    prisma.container.create({ data: {
+      type: etat.lastAcquisition,
+      numBalls: etat.lastAcquisition === "Yellow" ? etat.cptY : etat.lastAcquisition === "Pink" ? etat.cptP : etat.lastAcquisition === "Other" ? etat.cptO : undefined,
       idSession: currentSession.id
     }}).then()
   }
@@ -63,6 +78,9 @@ router.post('/api/getSessionValues', (req, res, next)=>{
 router.post('/api/start', (req, res, next)=>{
   if(etat.idle === true){
     etat.idle=false
+    etat.cptY = 0
+    etat.cptP = 0
+    etat.cptO = 0
     startLogging()
     res.status(200).send()
   } else {
@@ -79,6 +97,19 @@ router.post('/api/stop', (req, res, next)=>{
     res.status(403).send()
   }
   
+})
+
+router.post('/api/reset', (req, res, next)=>{
+  if(etat.idle === true)
+    {
+      arduino.write("oui\n")
+      etat.cptY = 0
+      etat.cptP = 0
+      etat.cptO = 0
+      res.status(200).send()
+    } else {
+      res.status(403).send()
+    }
 })
 
 router.post('/api/state', (req, res, next)=>{
