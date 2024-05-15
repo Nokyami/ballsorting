@@ -30,6 +30,12 @@ let currentSession = null
 const parser = arduino.pipe(new ReadlineParser({ delimiter: '\r\n' }))
 
 parser.on('data', (data)=>{
+  if(etat.lastAcquisition == "Empty")
+  {
+    etat.cptY = 0
+    etat.cptP = 0
+    etat.cptO = 0
+  }
   etat.lastTimestamp = new Date()
   etat.lastAcquisition = String(data)
   etat.cptY = Number(etat.lastAcquisition === "Yellow" ? etat.cptY+1 : etat.cptY)
@@ -47,7 +53,7 @@ parser.on('data', (data)=>{
     }}).then()
     prisma.container.create({ data: {
       type: etat.lastAcquisition,
-      numBalls: etat.lastAcquisition === "Yellow" ? etat.cptY : etat.lastAcquisition === "Pink" ? etat.cptP : etat.lastAcquisition === "Other" ? etat.cptO : undefined,
+      numBalls: etat.lastAcquisition === "Yellow" ? etat.cptY : etat.lastAcquisition === "Pink" ? etat.cptP : etat.lastAcquisition === "Other" ? etat.cptO : undifined,
       idSession: currentSession.id
     }}).then()
   }
@@ -66,6 +72,17 @@ router.get('/log', async (req, res, next)=> {
 router.post('/api/getSessionValues', (req, res, next)=>{
   const idSession = Number(req.body.idSession)
   prisma.measure.findMany({
+    where: {
+      idSession: idSession
+    }
+  }).then(val=>{
+    res.status(200).json(val)
+  })
+})
+
+router.post('/api/getSessionContainers', (req, res, next)=>{
+  const idSession = Number(req.body.idSession)
+  prisma.container.findMany({
     where: {
       idSession: idSession
     }
